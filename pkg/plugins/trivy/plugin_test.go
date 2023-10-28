@@ -7553,12 +7553,12 @@ func TestPlugin_ParseReportData(t *testing.T) {
 
 			resolver := kube.NewObjectResolver(fakeClient, &kube.CompatibleObjectMapper{})
 			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), &resolver)
-			vulnReport, secretReport, _, err := instance.ParseReportData(ctx, tc.imageRef, io.NopCloser(strings.NewReader(tc.input)))
+			scanReportData, err := instance.ParseReportData(ctx, tc.imageRef, io.NopCloser(strings.NewReader(tc.input)))
 			switch {
 			case tc.expectedError == nil:
 				require.NoError(t, err)
-				assert.Equal(t, tc.expectedVulnerabilityReport, vulnReport)
-				assert.Equal(t, tc.expectedExposedSecretReport, secretReport)
+				assert.Equal(t, tc.expectedVulnerabilityReport, scanReportData.VulnerabilityReport)
+				assert.Equal(t, tc.expectedExposedSecretReport, scanReportData.ExposedSecretReport)
 			default:
 				assert.EqualError(t, err, tc.expectedError.Error())
 			}

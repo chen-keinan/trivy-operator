@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/utils/pointer"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -73,7 +74,11 @@ func (b *ReportBuilder) reportName() string {
 	return fmt.Sprintf("%s-%s", strings.ToLower(kind), kube.ComputeHash(name+"-"+b.container))
 }
 
-func (b *ReportBuilder) Get() (v1alpha1.SbomReport, error) {
+func ReportGlobalName(artifact string) string {
+	return kube.ComputeHash(artifact)
+}
+
+func (b *ReportBuilder) NamespacedReport() (v1alpha1.SbomReport, error) {
 	reportLabels := map[string]string{
 		trivyoperator.LabelContainerName: b.container,
 	}
@@ -113,4 +118,27 @@ func (b *ReportBuilder) Get() (v1alpha1.SbomReport, error) {
 	// See https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
 	report.OwnerReferences[0].BlockOwnerDeletion = pointer.Bool(false)
 	return report, nil
+}
+
+func (b *ReportBuilder) Get() (v1alpha1.SbomReport, v1alpha1.ClusterSbomReport, error) {
+	report, err := b.NamespacedReport()
+	if err != nil {
+		return v1alpha1.SbomReport{}, v1alpha1.ClusterSbomReport{}, err
+	}
+	return report, b.clusterReport(), nil
+}
+
+func (b *ReportBuilder) clusterReport() v1alpha1.ClusterSbomReport {
+	artifactRef := ReportGlobalName(fmt.Sprintf("%s-%s-%s", b.data.Registry.Server, b.data.Artifact.Repository, b.data.Artifact.Tag))
+	reportLabels := map[string]string{
+		trivyoperator.LabelResourceImageRef: artifactRef,
+	}
+	return v1alpha1.ClusterSbomReport{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   artifactRef,
+			Labels: reportLabels,
+		},
+		Report: b.data,
+	}
+
 }

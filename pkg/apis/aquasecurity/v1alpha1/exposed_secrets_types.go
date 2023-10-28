@@ -59,6 +59,26 @@ type ExposedSecretReport struct {
 	Report ExposedSecretReportData `json:"report"`
 }
 
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Cluster,shortName={clusterexposedsecret}
+// +kubebuilder:printcolumn:name="Repository",type=string,JSONPath=`.report.artifact.repository`,description="The name of image repository"
+// +kubebuilder:printcolumn:name="Tag",type=string,JSONPath=`.report.artifact.tag`,description="The name of image tag"
+// +kubebuilder:printcolumn:name="Scanner",type=string,JSONPath=`.report.scanner.name`,description="The name of the exposed secret scanner"
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`,description="The age of the report"
+// +kubebuilder:printcolumn:name="Critical",type=integer,JSONPath=`.report.summary.criticalCount`,priority=1,description="The number of critical exposed secrets"
+// +kubebuilder:printcolumn:name="High",type=integer,JSONPath=`.report.summary.highCount`,priority=1,description="The number of high exposed secrets"
+// +kubebuilder:printcolumn:name="Medium",type=integer,JSONPath=`.report.summary.mediumCount`,priority=1,description="The number of medium exposed secrets"
+// +kubebuilder:printcolumn:name="Low",type=integer,JSONPath=`.report.summary.lowCount`,priority=1,description="The number of low exposed secrets"
+
+// ClusterExposedSecretReport summarizes exposed secrets in plaintext files built into container images.
+type ClusterExposedSecretReport struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// Report is the actual exposed secret report data.
+	Report ExposedSecretReportData `json:"report"`
+}
+
 // ExposedSecretReportData is the spec for the exposed secret scan result.
 //
 // The spec follows the Pluggable Scanners API defined for Harbor.
@@ -91,6 +111,16 @@ type ExposedSecretReportData struct {
 
 // ExposedSecretReportList is a list of ExposedSecretReport resources.
 type ExposedSecretReportList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []ExposedSecretReport `json:"items"`
+}
+
+// +kubebuilder:object:root=true
+
+// ClusterExposedSecretReportList is a list of cluster ExposedSecretReport resources.
+type ClusterExposedSecretReportList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
 

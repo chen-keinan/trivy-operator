@@ -25,7 +25,10 @@ const (
 	LabelResourceNamespace = "trivy-operator.resource.namespace"
 	LabelContainerName     = "trivy-operator.container.name"
 	LabelResourceSpecHash  = "resource-spec-hash"
-	LabelPluginConfigHash  = "plugin-config-hash"
+	LabelResourceImageID   = "resource-image-id"
+	LabelResourceImageRef  = "resource-image-hash"
+
+	LabelPluginConfigHash = "plugin-config-hash"
 
 	LabelVulnerabilityReportScanner = "vulnerabilityReport.scanner"
 	LabelNodeInfoCollector          = "node-info.collector"

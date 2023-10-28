@@ -15,7 +15,7 @@ import (
 // Write creates or updates the given slice of v1alpha1.SbomReport
 // instances.
 type Writer interface {
-	Write(context.Context, []v1alpha1.SbomReport) error
+	Write(context.Context, []v1alpha1.SbomReport, []v1alpha1.ClusterSbomReport) error
 }
 
 // Reader is the interface that wraps methods for finding v1alpha1.SbomReport objects.
@@ -44,9 +44,16 @@ func NewReadWriter(objectResolver *kube.ObjectResolver) ReadWriter {
 	}
 }
 
-func (r *readWriter) Write(ctx context.Context, reports []v1alpha1.SbomReport) error {
+func (r *readWriter) Write(ctx context.Context, reports []v1alpha1.SbomReport, clusterReports []v1alpha1.ClusterSbomReport) error {
 	for _, report := range reports {
 		err := r.createOrUpdate(ctx, report)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, creport := range clusterReports {
+		err := r.createOrUpdateClusterReport(ctx, creport)
 		if err != nil {
 			return err
 		}
@@ -59,6 +66,27 @@ func (r *readWriter) createOrUpdate(ctx context.Context, report v1alpha1.SbomRep
 	err := r.Get(ctx, types.NamespacedName{
 		Name:      report.Name,
 		Namespace: report.Namespace,
+	}, &existing)
+
+	if err == nil {
+		copied := existing.DeepCopy()
+		copied.Labels = report.Labels
+		copied.Report = report.Report
+
+		return r.Update(ctx, copied)
+	}
+
+	if errors.IsNotFound(err) {
+		return r.Create(ctx, &report)
+	}
+
+	return err
+}
+
+func (r *readWriter) createOrUpdateClusterReport(ctx context.Context, report v1alpha1.ClusterSbomReport) error {
+	var existing v1alpha1.ClusterSbomReport
+	err := r.Get(ctx, types.NamespacedName{
+		Name: report.Name,
 	}, &existing)
 
 	if err == nil {

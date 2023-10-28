@@ -1847,32 +1847,48 @@ func (p *plugin) appendTrivyNonSSLEnv(config Config, image string, env []corev1.
 	return env, nil
 }
 
-func (p *plugin) ParseReportData(ctx trivyoperator.PluginContext, imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityReportData, v1alpha1.ExposedSecretReportData, *v1alpha1.SbomReportData, error) {
+func (p *plugin) ParseReportData(ctx trivyoperator.PluginContext, imageRef string, logsReader io.ReadCloser) (vulnerabilityreport.ScanReportsData, error) {
 	var vulnReport v1alpha1.VulnerabilityReportData
 	var secretReport v1alpha1.ExposedSecretReportData
 	var sbomReport v1alpha1.SbomReportData
 
 	config, err := p.newConfigFrom(ctx)
 	if err != nil {
-		return vulnReport, secretReport, &sbomReport, err
+		return vulnerabilityreport.ScanReportsData{
+			VulnerabilityReport: vulnReport,
+			ExposedSecretReport: secretReport,
+			SbomReport:          &sbomReport,
+		}, err
 	}
 	cmd, err := config.GetCommand()
 	if err != nil {
-		return vulnReport, secretReport, &sbomReport, err
+		return vulnerabilityreport.ScanReportsData{
+			VulnerabilityReport: vulnReport,
+			ExposedSecretReport: secretReport,
+			SbomReport:          &sbomReport,
+		}, err
 	}
 	compressedLogs := ctx.GetTrivyOperatorConfig().CompressLogs()
 	if compressedLogs && cmd != Filesystem && cmd != Rootfs {
 		var errCompress error
 		logsReader, errCompress = utils.ReadCompressData(logsReader)
 		if errCompress != nil {
-			return vulnReport, secretReport, &sbomReport, errCompress
+			return vulnerabilityreport.ScanReportsData{
+				VulnerabilityReport: vulnReport,
+				ExposedSecretReport: secretReport,
+				SbomReport:          &sbomReport,
+			}, err
 		}
 	}
 
 	var reports ty.Report
 	err = json.NewDecoder(logsReader).Decode(&reports)
 	if err != nil {
-		return vulnReport, secretReport, &sbomReport, err
+		return vulnerabilityreport.ScanReportsData{
+			VulnerabilityReport: vulnReport,
+			ExposedSecretReport: secretReport,
+			SbomReport:          &sbomReport,
+		}, err
 	}
 
 	vulnerabilities := make([]v1alpha1.Vulnerability, 0)
@@ -1887,22 +1903,38 @@ func (p *plugin) ParseReportData(ctx trivyoperator.PluginContext, imageRef strin
 	if ctx.GetTrivyOperatorConfig().GenerateSbomEnabled() {
 		bom, err = generateSbomFromScanResult(reports)
 		if err != nil {
-			return vulnReport, secretReport, &sbomReport, err
+			return vulnerabilityreport.ScanReportsData{
+				VulnerabilityReport: vulnReport,
+				ExposedSecretReport: secretReport,
+				SbomReport:          &sbomReport,
+			}, err
 		}
 	}
 	registry, artifact, err := p.parseImageRef(imageRef, reports.Metadata.ImageID)
 	if err != nil {
-		return vulnReport, secretReport, &sbomReport, err
+		return vulnerabilityreport.ScanReportsData{
+			VulnerabilityReport: vulnReport,
+			ExposedSecretReport: secretReport,
+			SbomReport:          &sbomReport,
+		}, err
 	}
 
 	trivyImageRef, err := config.GetImageRef()
 	if err != nil {
-		return vulnReport, secretReport, &sbomReport, err
+		return vulnerabilityreport.ScanReportsData{
+			VulnerabilityReport: vulnReport,
+			ExposedSecretReport: secretReport,
+			SbomReport:          &sbomReport,
+		}, err
 	}
 
 	version, err := trivyoperator.GetVersionFromImageRef(trivyImageRef)
 	if err != nil {
-		return vulnReport, secretReport, &sbomReport, err
+		return vulnerabilityreport.ScanReportsData{
+			VulnerabilityReport: vulnReport,
+			ExposedSecretReport: secretReport,
+			SbomReport:          &sbomReport,
+		}, err
 	}
 	var sbomData *v1alpha1.SbomReportData
 	if bom != nil {
@@ -1919,29 +1951,30 @@ func (p *plugin) ParseReportData(ctx trivyoperator.PluginContext, imageRef strin
 			Bom:      *bom,
 		}
 	}
-	return v1alpha1.VulnerabilityReportData{
-			UpdateTimestamp: metav1.NewTime(p.clock.Now()),
-			Scanner: v1alpha1.Scanner{
-				Name:    v1alpha1.ScannerNameTrivy,
-				Vendor:  "Aqua Security",
-				Version: version,
-			},
-			Registry:        registry,
-			Artifact:        artifact,
-			Summary:         p.vulnerabilitySummary(vulnerabilities),
-			Vulnerabilities: vulnerabilities,
-		}, v1alpha1.ExposedSecretReportData{
-			UpdateTimestamp: metav1.NewTime(p.clock.Now()),
-			Scanner: v1alpha1.Scanner{
-				Name:    v1alpha1.ScannerNameTrivy,
-				Vendor:  "Aqua Security",
-				Version: version,
-			},
-			Registry: registry,
-			Artifact: artifact,
-			Summary:  p.secretSummary(secrets),
-			Secrets:  secrets,
-		}, sbomData, nil
+	return vulnerabilityreport.ScanReportsData{VulnerabilityReport: v1alpha1.VulnerabilityReportData{
+		UpdateTimestamp: metav1.NewTime(p.clock.Now()),
+		Scanner: v1alpha1.Scanner{
+			Name:    v1alpha1.ScannerNameTrivy,
+			Vendor:  "Aqua Security",
+			Version: version,
+		},
+		Registry:        registry,
+		Artifact:        artifact,
+		Summary:         p.vulnerabilitySummary(vulnerabilities),
+		Vulnerabilities: vulnerabilities,
+	}, ExposedSecretReport: v1alpha1.ExposedSecretReportData{
+		UpdateTimestamp: metav1.NewTime(p.clock.Now()),
+		Scanner: v1alpha1.Scanner{
+			Name:    v1alpha1.ScannerNameTrivy,
+			Vendor:  "Aqua Security",
+			Version: version,
+		},
+		Registry: registry,
+		Artifact: artifact,
+		Summary:  p.secretSummary(secrets),
+		Secrets:  secrets,
+	}, SbomReport: sbomData,
+	}, nil
 
 }
 

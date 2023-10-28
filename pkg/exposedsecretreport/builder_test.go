@@ -16,7 +16,7 @@ import (
 
 func TestReportBuilder(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
-	report, err := exposedsecretreport.NewReportBuilder(scheme.Scheme).
+	report, _, err := exposedsecretreport.NewReportBuilder(scheme.Scheme).
 		Controller(&appsv1.ReplicaSet{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ReplicaSet",

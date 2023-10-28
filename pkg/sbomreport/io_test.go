@@ -50,7 +50,7 @@ func TestNewReadWriter(t *testing.T) {
 					},
 				},
 			},
-		})
+		}, []v1alpha1.ClusterSbomReport{})
 		require.NoError(t, err)
 		var list v1alpha1.SbomReportList
 		err = testClient.List(context.TODO(), &list)
@@ -150,7 +150,7 @@ func TestNewReadWriter(t *testing.T) {
 					},
 				},
 			},
-		})
+		}, []v1alpha1.ClusterSbomReport{})
 		require.NoError(t, err)
 
 		var found v1alpha1.SbomReport
