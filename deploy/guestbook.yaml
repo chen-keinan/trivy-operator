@@ -4,28 +4,26 @@ metadata:
   name: guestbook
   finalizers:
     - resources-finalizer.argocd.argoproj.io/foreground
-  annotations:
-    codefresh.io/product: guestbook
 spec:
   project: default
   destination:
     name: in-cluster
-    namespace: default
+    namespace: guestbook
   source:
     path: helm-guestbook
     repoURL: https://github.com/chen-keinan/argocd-example-apps.git
     targetRevision: HEAD
   syncPolicy:
     automated:
-      prune: false
-      selfHeal: false
-      allowEmpty: false
+      prune: true
+      selfHeal: true
+      allowEmpty: true
     syncOptions:
       - PrunePropagationPolicy=foreground
-      - Replace=false
+      - Replace=true
       - PruneLast=false
       - Validate=true
-      - CreateNamespace=false
+      - CreateNamespace=true
       - ApplyOutOfSyncOnly=false
       - ServerSideApply=true
       - RespectIgnoreDifferences=false
