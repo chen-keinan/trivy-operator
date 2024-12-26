@@ -75,9 +75,9 @@ operator:
   scanJobsRetryDelay: 30s
 
   # -- the flag to enable vulnerability scanner
-  vulnerabilityScannerEnabled: true
+  vulnerabilityScannerEnabled: false
   # -- the flag to enable sbom generation, required for enabling ClusterVulnerabilityReports
-  sbomGenerationEnabled: true
+  sbomGenerationEnabled: false
   # -- the flag to enable cluster sbom cache generation
   clusterSbomCacheEnabled: false
   # -- scannerReportTTL the flag to set how long a report should exist. "" means that the ScannerReportTTL feature is disabled
@@ -85,7 +85,7 @@ operator:
   # -- cacheReportTTL the flag to set how long a cluster sbom report should exist. "" means that the cacheReportTTL feature is disabled
   cacheReportTTL: "120h"
   # -- configAuditScannerEnabled the flag to enable configuration audit scanner
-  configAuditScannerEnabled: true
+  configAuditScannerEnabled: false
   # -- rbacAssessmentScannerEnabled the flag to enable rbac assessment scanner
   rbacAssessmentScannerEnabled: false
   # -- infraAssessmentScannerEnabled the flag to enable infra assessment scanner
